@@ -8,171 +8,205 @@ redirect_from: smi
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
 <script>
-  function createTable(data) {
-    if (Array.isArray(data)) {
-      // Set Spec Version for Headers
-      data[0].more_details.forEach((spec) => {
-        let th = $(`.${spec.smi_specification}`);
-        th.append(
-          `<div style="font-size: small;font-weight: normal;">${spec.smi_version}</div>`
-        );
-      });
 
-      const tbody = $("tbody");
-
-      // Create a map set of all the SMI specifications
-      var n = new Map();
-      data.map((s, index) => {
-        n.set(s.mesh_name, index);
-      });
-
-      // Filter the latest ones
-      for (let k of n.keys()) {
-        let t = "v0.0.0";
-        data.filter((result, id) => {
-          // Skipping service mesh having "none" mesh version
-          if (result.mesh_version === "none") return;
-
-          if (
-            k === result.mesh_name &&
-            t.substr(1, 6) <= result.mesh_version.substr(1, 9)
-          ) {
-            result.mesh_version = result.mesh_version;
-            result.mesh_name = k;
-            t = result.mesh_version;
-
-            // Create a row for the incoming data
-            const tr = document.createElement("tr");
-            // set attributes to the row
-            tr.setAttribute("class", "collapse-head");
-            tr.setAttribute("style", "border-bottom: 1px solid rgb(239, 239, 239);");
-            tr.setAttribute("id", result.id);
-            tr.setAttribute("data-toggle", "tooltip");
-            tr.setAttribute("id", `.${result.id}`);
-
-            // Create tds for the row
-            // 1. td for the mesh icon
-            const td1 = document.createElement("td");
-            const img = document.createElement("img");
-            const istio = document.createElement("div");
-            istio.setAttribute("style", "font-size:.85rem;");
-
-            img.setAttribute("style", "height:40px;width:40px!important");
-            img.setAttribute("alt", result.mesh_name);
-            img.setAttribute("data-toggle", "tooltip");
-            img.setAttribute("title", result.mesh_name);
-            switch (result.mesh_name) {
-              case "Traefik Mesh":
-                img.setAttribute("src", "images/traefik-mesh.svg");
-                break;
-              case "Open Service Mesh":
-                img.setAttribute("src", "images/osm.svg");
-                break;
-              case "Nginx Service Mesh":
-                img.setAttribute("src", "images/nginx-sm.svg");
-                break;
-              case "Linkerd":
-                img.setAttribute("src", "images/linkerd.svg");
-                break;
-              case "Kuma":
-                img.setAttribute("src", "images/Kuma.svg");
-                break;
-              case "Consul":
-                img.setAttribute("src", "images/consul.svg");
-                break;
-              case "App Mesh":
-                img.setAttribute("src", "images/aws-app-mesh.svg");
-                break;
-              case "Istio":
-                img.setAttribute("src", "images/istio.svg");
-                break;
-            }
-            td1.appendChild(img);
-            // console.log(x);
-            // console.log(result.mesh_name);
-            // console.log(result);
-            // console.log(result.mesh_version);
-
-            // Istio specific label
-            switch (result.mesh_name) {
-              case "Istio":
-                td1.appendChild(istio);
-            }
-            tr.appendChild(td1);
-
-            // 2. td for mesh version
-            const td2 = document.createElement("td");
-            td2.innerText = result.mesh_version;
-            tr.appendChild(td2);
-
-            // 3. td for capability
-            const moreDetails = result.more_details;
-            if (Array.isArray(moreDetails)) {
-              moreDetails.forEach((detail) => {
-                // Create td for each detail
-                const td = document.createElement("td");
-                td.setAttribute("data-toggle", "tooltip");
-                td.setAttribute("title", `${detail.reason} | ${detail.result}`);
-
-                // Create icon element
-                const i = document.createElement("i");
-                switch (detail.capability) {
+  function returnIcon(iconData){
+    let iconProperties;
+    switch (iconData.capability) {
                   case "NONE":
-                    i.setAttribute("class", "fa fa-times-circle");
-                    i.setAttribute(
-                      "style",
+                  iconProperties = {
+                      "class":"fa fa-times-circle",
+                      "style":
                       "font-size:32px;color:red;cursor:help;"
-                    );
+                    }
                     break;
                   case "FULL":
-                    i.setAttribute("class", "fa fa-check-circle");
-                    i.setAttribute("style", "font-size:32px;color:green;cursor:help;");
+                  iconProperties={
+                    "class":"fa fa-check-circle",
+                    "style":"font-size:32px;color:green;cursor:help;"
+                  }
                     break;
                   case "HALF":
-                    i.setAttribute("class", "fa fa-check-circle");
-                    i.setAttribute(
-                      "style",
+                  iconProperties={
+                      "class":"fa fa-check-circle",
+                      "style":
                       "font-size:32px;color:orange;clip-path: polygon(0 0, 50% 0, 50% 100%, 0% 100%);cursor:help;"
-                    );
+                    }
                     break;
                 }
-                td.appendChild(i);
+    return iconProperties;
+  }
 
-                // Add this td to the row
-                tr.appendChild(td);
-              });
+  function returnMeshImagePath(mesh_name){
+    let imagePath;
+    switch (mesh_name) {
+              case "Traefik Mesh":
+              imagePath =  "images/traefik-mesh.svg";
+                break;
+              case "Open Service Mesh":
+              imagePath =  "images/osm.svg";
+                break;
+              case "Nginx Service Mesh":
+              imagePath =  "images/nginx-sm.svg";
+                break;
+              case "Linkerd":
+              imagePath =  "images/linkerd.svg";
+                break;
+              case "Kuma":
+              imagePath =  "images/Kuma.svg";
+                break;
+              case "Consul":
+              imagePath =  "images/consul.svg";
+                break;
+              case "App Mesh":
+              imagePath =  "images/aws-app-mesh.svg";
+                break;
+              case "Istio":
+              imagePath =  "images/istio.svg";
+                break;
             }
 
-            // 4. td for passing percentage
-            const td4 = document.createElement("td");
-            td4.innerText = `${result.passing_percentage}%`;
-            tr.appendChild(td4);
+            return imagePath ;
 
-            tbody.append(tr);
-          }
-        });
+  }
+
+  function createTable(data) {
+    let mapTest = {};
+
+    for(x in data){
+      
+      if(mapTest[data[x].mesh_version]!=undefined){
+        let testArray=[];
+        testArray=mapTest[data[x].mesh_version];
+        testArray.push(data[x]);
+        mapTest[data[x].mesh_version] = testArray; 
+      }else{
+        let testArray=[];
+        testArray.push(data[x]);
+        mapTest[data[x].mesh_version] = testArray;
+      }
+      
+    }
+
+    mapTest = Object.fromEntries(Object.entries(mapTest).sort());
+
+    let table = document.getElementById("meshTable");
+    let topRowVersion = document.getElementById("tableHeader");
+
+    let lastBodyActive;
+
+    Object.entries(mapTest).forEach(([key,value])=>{
+      
+      let th = document.createElement("th");
+      th.id = key;
+      th.innerHTML=key;
+      topRowVersion.appendChild(th);
+      
+      let tbody = document.createElement("tbody");
+      tbody.id = key+"tableBody";
+      tbody.setAttribute("hidden","hidden");
+      table.appendChild(tbody);
+
+      th.onclick = function(){
+
+        if(th.id != lastBodyActive){
+          
+        let hideBody = document.getElementById(lastBodyActive+"tableBody");
+        hideBody.setAttribute("hidden","hidden");
+        let tbodyActive = document.getElementById(th.id+"tableBody");
+        tbodyActive.removeAttribute("hidden");
+        lastBodyActive = th.id;
+
+        let tableHeaderBottom = document.getElementById("tableHeaderBottom");
+        tableHeaderBottom.cells[2].childNodes[1].innerHTML = mapTest[lastBodyActive][0]["more_details"][0].smi_version;
+        tableHeaderBottom.cells[3].childNodes[1] =  mapTest[lastBodyActive][0]["more_details"][1].smi_version;
+        tableHeaderBottom.cells[4].childNodes[1] =  mapTest[lastBodyActive][0]["more_details"][2].smi_version;
+        
+        }
+        
       }
 
-      // Custom row for showing message
-      const tr = document.createElement("tr");
-      tr.setAttribute("style", "height: .5rem");
+      lastBodyActive = key;
 
-      const td = document.createElement("td");
-      td.setAttribute("colspan", "6");
+    });
 
-      const span = document.createElement("span");
-      span.setAttribute(
-        "style",
-        "vertical-align: text-top; font-style: italic;font-size: .8rem;color:#666;"
-      );
-      span.innerText = "Hover for details of test failures.";
+    let tableHeaderBottom = document.getElementById("tableHeaderBottom");
+      let div1 = document.createElement("div");
+      let div2 = document.createElement("div");
+      let div3 = document.createElement("div");
+      div1.classList.add("subHeading");
+      div2.classList.add("subHeading");
+      div3.classList.add("subHeading");
 
-      td.appendChild(span);
+      div1.innerHTML = mapTest[lastBodyActive][0]["more_details"][0].smi_version;
+      div2.innerHTML = mapTest[lastBodyActive][0]["more_details"][1].smi_version;
+      div3.innerHTML = mapTest[lastBodyActive][0]["more_details"][2].smi_version;
 
-      tr.appendChild(td);
+      tableHeaderBottom.cells[2].appendChild(div1);
+      tableHeaderBottom.cells[3].appendChild(div2);
+      tableHeaderBottom.cells[4].appendChild(div3);
+        
+    let makeVisibleLastBody = document.getElementById(lastBodyActive+"tableBody");
+      makeVisibleLastBody.removeAttribute("hidden");
 
-      tbody.append(tr);
-    }
+    Object.entries(mapTest).forEach(([key,value])=>{
+      let tbody = document.getElementById(key+"tableBody");
+      for(x in value){
+        let tr = document.createElement("tr");
+
+        tr.setAttribute("class", "collapse-head");
+            tr.setAttribute("style", "border-bottom: 1px solid rgb(239, 239, 239);");
+            tr.setAttribute("data-toggle", "tooltip");
+        
+        let tcName = document.createElement("td");
+        const img = document.createElement("img");
+        img.setAttribute("style", "height:40px;width:40px!important");
+        img.setAttribute("alt", value[x].mesh_name);
+        img.setAttribute("data-toggle", "tooltip");
+        img.setAttribute("title", value[x].mesh_name);
+
+        let imgPath = returnMeshImagePath(value[x].mesh_name);
+        if(imgPath!=undefined){
+          img.setAttribute("src",imgPath);
+        }
+        
+        tcName.appendChild(img);
+        
+        tr.appendChild(tcName);
+        let tcMeshVersion = document.createElement("td");
+        tcMeshVersion.innerHTML = value[x].mesh_version;
+        tr.appendChild(tcMeshVersion);
+
+        for(y in value[x].more_details){
+          let tcIcon = document.createElement("td");
+          
+          if(value[x].more_details[y].reason != undefined && value[x].more_details[y].result != undefined){
+            tcIcon.setAttribute("title", `${value[x].more_details[y].reason} | ${value[x].more_details[y].result}`);
+           }else if(value[x].more_details[y].reason != undefined ){
+            tcIcon.setAttribute("title", `${value[x].more_details[y].reason}`);
+          }else if(value[x].more_details[y].result != undefined ){
+            tcIcon.setAttribute("title", `${value[x].more_details[y].result}`);
+          }
+
+          tcIcon.setAttribute("data-toggle", "tooltip");
+          
+          let i = document.createElement("i");
+          let propeties = returnIcon(value[x].more_details[y]);
+          i.setAttribute("class",propeties.class);
+          i.setAttribute("style",propeties.style);
+          tcIcon.append(i);
+          tr.appendChild(tcIcon);
+        }
+
+        let tcPassed = document.createElement("td");
+        tcPassed.innerHTML = value[x].passing_percentage+"%";
+        tr.appendChild(tcPassed);
+
+        tbody.appendChild(tr);
+
+      }
+
+    });
+
   }
 
   $(document).ready(function () {
@@ -343,6 +377,11 @@ redirect_from: smi
     transform: translateZ(0);
     -webkit-animation: load6 1.7s infinite ease, round 1.7s infinite ease;
     animation: load6 1.7s infinite ease, round 1.7s infinite ease;
+  }
+
+  .subHeading{
+    font-size: small;
+    font-weight: normal;
   }
 
   @-webkit-keyframes load6 {
@@ -528,17 +567,12 @@ redirect_from: smi
 <div style="justify-content: center">
   <div class="js-data"></div>
   <div class="tableDiv">
-    <table class="table highlighted table-responsive table-hover">
+    <table class="table highlighted table-responsive table-hover" id="meshTable">
       <thead class="tableHead">
-        <tr class="top-row-table">
-          <th id="version">v0.6.0</th>
-          <th id="blank"></th>
-          <th id="blank"></th>
-          <th id="blank"></th>
-          <th id="blank"></th>
-          <th id="lastBlank"></th>
+        <tr class="top-row-table" id="tableHeader">
+          
         </tr>
-        <tr class="bottom-row-table">
+        <tr class="bottom-row-table" id="tableHeaderBottom">
           <th>Service Mesh</th>
           <th>Mesh Version</th>
           <th class="traffic-access">Traffic Access</th>
@@ -547,7 +581,6 @@ redirect_from: smi
           <th>% Passed</th>
         </tr>
       </thead>
-      <tbody></tbody>
     </table>
     <div class="mainLegendDiv">
       <div class="legend">
